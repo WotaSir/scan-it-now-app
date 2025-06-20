@@ -18,7 +18,10 @@ const QRCodeGenerator = () => {
   const { toast } = useToast();
 
   const generateQRCode = async (inputText: string, qrSize: string) => {
+    console.log('Generating QR code for:', inputText);
+    
     if (!inputText.trim()) {
+      console.log('No input text, clearing QR code');
       setQrCodeUrl('');
       return;
     }
@@ -26,7 +29,15 @@ const QRCodeGenerator = () => {
     setIsGenerating(true);
     try {
       const canvas = canvasRef.current;
+      console.log('Canvas element:', canvas);
+      
       if (canvas) {
+        // Clear the canvas first
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+        
         await QRCode.toCanvas(canvas, inputText, {
           width: parseInt(qrSize),
           margin: 2,
@@ -37,7 +48,10 @@ const QRCodeGenerator = () => {
         });
         
         const url = canvas.toDataURL();
+        console.log('QR code generated, data URL length:', url.length);
         setQrCodeUrl(url);
+      } else {
+        console.error('Canvas element not found');
       }
     } catch (error) {
       console.error('Error generating QR code:', error);
@@ -155,11 +169,12 @@ const QRCodeGenerator = () => {
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
                     <p className="text-gray-500">Generating QR code...</p>
                   </div>
-                ) : qrCodeUrl ? (
+                ) : text.trim() && qrCodeUrl ? (
                   <div className="text-center">
                     <canvas
                       ref={canvasRef}
-                      className="mx-auto mb-4 rounded-lg shadow-md"
+                      className="mx-auto mb-4 rounded-lg shadow-md border"
+                      style={{ display: 'block' }}
                     />
                     <p className="text-sm text-gray-500">QR Code generated successfully!</p>
                   </div>
@@ -170,6 +185,14 @@ const QRCodeGenerator = () => {
                     </div>
                     <p className="text-gray-500">Enter text above to generate QR code</p>
                   </div>
+                )}
+                
+                {/* Hidden canvas for generation - this ensures the canvas is always available */}
+                {!qrCodeUrl && (
+                  <canvas
+                    ref={canvasRef}
+                    style={{ display: 'none' }}
+                  />
                 )}
               </div>
             </CardContent>
