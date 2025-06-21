@@ -1,8 +1,8 @@
 
-import { AdvancedQRGenerator } from '@/components/QRGenerator/AdvancedQRGenerator';
+import { MainApp } from '@/components/MainApp';
 
 const Index = () => {
-  return <AdvancedQRGenerator />;
+  return <MainApp />;
 };
 
 export default Index;

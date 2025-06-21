@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { QRType, QRCustomization } from '@/types/qr-types';
 import { QRTypeSelector } from './QRTypeSelector';
 import { QRInputForm } from './QRInputForm';
@@ -17,7 +17,11 @@ import {
   generateLocationQR 
 } from '@/utils/qr-generators';
 
-export const AdvancedQRGenerator: React.FC = () => {
+interface AdvancedQRGeneratorProps {
+  initialContent?: string;
+}
+
+export const AdvancedQRGenerator: React.FC<AdvancedQRGeneratorProps> = ({ initialContent }) => {
   const [selectedType, setSelectedType] = useState<QRType>('url');
   const [formData, setFormData] = useState<any>({});
   const [customization, setCustomization] = useState<QRCustomization>({
@@ -30,6 +34,37 @@ export const AdvancedQRGenerator: React.FC = () => {
     },
     pattern: 'square'
   });
+
+  // Handle initial content from scanner
+  useEffect(() => {
+    if (initialContent) {
+      // Try to detect QR type and populate form
+      if (initialContent.startsWith('http') || initialContent.startsWith('www')) {
+        setSelectedType('url');
+        setFormData({ url: initialContent });
+      } else if (initialContent.startsWith('tel:')) {
+        setSelectedType('phone');
+        setFormData({ phone: initialContent.replace('tel:', '') });
+      } else if (initialContent.startsWith('mailto:')) {
+        setSelectedType('email');
+        setFormData({ email: initialContent.replace('mailto:', '') });
+      } else if (initialContent.startsWith('WIFI:')) {
+        setSelectedType('wifi');
+        // Parse WiFi QR format
+        const parts = initialContent.split(';');
+        const wifiData: any = {};
+        parts.forEach(part => {
+          if (part.startsWith('S:')) wifiData.ssid = part.substring(2);
+          if (part.startsWith('P:')) wifiData.password = part.substring(2);
+          if (part.startsWith('T:')) wifiData.security = part.substring(2);
+        });
+        setFormData(wifiData);
+      } else {
+        setSelectedType('text');
+        setFormData({ text: initialContent });
+      }
+    }
+  }, [initialContent]);
 
   const qrContent = useMemo(() => {
     try {
@@ -76,61 +111,57 @@ export const AdvancedQRGenerator: React.FC = () => {
     setFormData({});
   };
 
+  const qrData = {
+    type: selectedType,
+    content: qrContent,
+    customization,
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-4">
-      <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-4">
-            Advanced QR Code Generator
-          </h1>
-          <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-            Create professional QR codes for any purpose with extensive customization options
-          </p>
-        </div>
+    <div className="space-y-8">
+      <QRTypeSelector selectedType={selectedType} onTypeChange={handleTypeChange} />
 
-        <QRTypeSelector selectedType={selectedType} onTypeChange={handleTypeChange} />
+      <div className="grid lg:grid-cols-3 gap-8">
+        {/* Input Form */}
+        <Card className="lg:col-span-1 backdrop-blur-sm bg-white/80 dark:bg-gray-800/80 border-0 shadow-lg">
+          <CardHeader>
+            <CardTitle>Content</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <QRInputForm 
+              type={selectedType} 
+              data={formData} 
+              onChange={setFormData} 
+            />
+          </CardContent>
+        </Card>
 
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* Input Form */}
-          <Card className="lg:col-span-1">
-            <CardHeader>
-              <CardTitle>Content</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <QRInputForm 
-                type={selectedType} 
-                data={formData} 
-                onChange={setFormData} 
-              />
-            </CardContent>
-          </Card>
+        {/* Customization Panel */}
+        <Card className="lg:col-span-1 backdrop-blur-sm bg-white/80 dark:bg-gray-800/80 border-0 shadow-lg">
+          <CardHeader>
+            <CardTitle>Customization</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <QRCustomizationPanel 
+              customization={customization} 
+              onChange={setCustomization} 
+            />
+          </CardContent>
+        </Card>
 
-          {/* Customization Panel */}
-          <Card className="lg:col-span-1">
-            <CardHeader>
-              <CardTitle>Customization</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <QRCustomizationPanel 
-                customization={customization} 
-                onChange={setCustomization} 
-              />
-            </CardContent>
-          </Card>
-
-          {/* Preview */}
-          <Card className="lg:col-span-1">
-            <CardHeader>
-              <CardTitle>Preview</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <QRPreview 
-                content={qrContent} 
-                customization={customization} 
-              />
-            </CardContent>
-          </Card>
-        </div>
+        {/* Preview */}
+        <Card className="lg:col-span-1 backdrop-blur-sm bg-white/80 dark:bg-gray-800/80 border-0 shadow-lg">
+          <CardHeader>
+            <CardTitle>Preview & Download</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <QRPreview 
+              content={qrContent} 
+              customization={customization}
+              qrData={qrData}
+            />
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
