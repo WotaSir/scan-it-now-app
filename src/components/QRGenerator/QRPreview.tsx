@@ -1,7 +1,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import QRCode from 'qrcode';
-import jsPDF from 'jspdf';
+import { jsPDF } from 'jspdf';
 import { QRCustomization } from '@/types/qr-types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
