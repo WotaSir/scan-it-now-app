@@ -1,8 +1,8 @@
 
-import QRCodeGenerator from '@/components/QRCodeGenerator';
+import { AdvancedQRGenerator } from '@/components/QRGenerator/AdvancedQRGenerator';
 
 const Index = () => {
-  return <QRCodeGenerator />;
+  return <AdvancedQRGenerator />;
 };
 
 export default Index;
